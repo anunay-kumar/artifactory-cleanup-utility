@@ -1,5 +1,5 @@
 
-# Artifactory Maintenance Utility
+# Artifactory Cleanup Utility
 
 This utility cleans up the artifactory repos and associated paths based on the artifactory.yaml config file found in the same directory as this script. It requires Python3. The idea is to periodically run this utility as a cron job or a jenkins job. This utility is configured using a yaml file (artifactory.yaml). This yaml file lists down the repos and their corresponding paths that need to be cleaned up. There is a retention period that is specified for each repo which retains the files created within that period.
 
