@@ -17,7 +17,7 @@ logger.addHandler(ch)
 class utils:
 
     def __init__(self):
-        self.art_host = 'https://eu.artifactory.swg-devops.com/artifactory/'
+        self.art_host = 'https://art-host.com/artifactory/'
         self.src_repo = None
         self.dst_repo = None
         self.recycle_repo = None
