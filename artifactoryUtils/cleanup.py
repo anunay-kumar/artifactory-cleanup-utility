@@ -13,6 +13,7 @@ formatter = logging.Formatter('[%(asctime)s][%(name)s] %(levelname)s  %(message)
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+
 class utils:
 
     def __init__(self):
@@ -24,8 +25,9 @@ class utils:
         self.dst_path = None
         self.action = None
         self.retention_period = None
-        with open(r'artifactory.yaml') as file:
-            self.skip_list = yaml.full_load(file)['skip_list']
+        self.config_file = None
+        self.artifact_type = None
+        self.skip_list = None
 
         if "ART_API" in os.environ:
             self.art_key = os.getenv("ART_API")
@@ -38,12 +40,12 @@ class utils:
         # AQL finds items modified older than self.retention_period
         aql = 'items.find( \
                     { \
-                        "type":"folder", \
+                        "type":"%s", \
                         "repo": "%s", \
                         "modified":{"$before" : "%s"}, \
                         "path":"%s" \
                     } \
-                )'%(self.src_repo,self.retention_period,self.src_path)
+                )'%(self.artifact_type,self.src_repo,self.retention_period,self.src_path)
         
         logger.debug('AQL: ' + aql)
         return aql.replace(' ','')
@@ -92,7 +94,6 @@ class utils:
 
     #Delete artifacts
     def deleteItemsfromRepo(self, isDryRun, artifact_repo, artifact_path):
-
         # REST call
         head = {'Content-Type': 'text/plain', 'Accept': 'application/json', 'X-JFrog-Art-Api': self.art_key}
         api_url = self.art_host + artifact_repo + '/' + artifact_path + '?to=/' + self.recycle_repo + '/' + artifact_path
@@ -123,10 +124,7 @@ class utils:
         else:
             logger.debug("[Validate-Path] Valid path: '" + artifact_path + "' not in skip_list - '" + str(self.skip_list))
 
-
     def uploadfile(self, artifact_repo, artifact_path, artifact_file):
-
-
         # REST call
         head = {'Content-Type': 'text/plain', 'Accept': 'application/json', 'X-JFrog-Art-Api': self.art_key}
         api_url = self.art_host + artifact_repo + '/' + artifact_path + '/' + os.path.basename(artifact_file)
@@ -144,19 +142,22 @@ class utils:
             logger.critical("Failed to upload file...")
             sys.exit(1)
 
-
     def upload_logs(self, repo, path, file):
         logger.info('Uploading logs...' + file)
         self.uploadfile(repo, path, file)
-
-
 
     # This method is the controller method that manages the entire cleanup cycle
     def clean(self, isDryRun, src_repo, src_path, retention_period, recycle_repo='', copy=True, delete=True):
         self.src_repo = src_repo
         self.dst_repo = None
         self.recycle_repo = recycle_repo
-        self.src_path = src_path
+        if 'file' in src_path.lower():
+            self.artifact_type = 'file'
+            self.src_path = src_path.split('|')[0]
+        else:
+            self.artifact_type = 'folder'
+            self.src_path = src_path
+
         self.dst_path = None
         self.retention_period = retention_period
         logger.info("")
@@ -166,8 +167,9 @@ class utils:
         logger.info('Source Repo: ' + self.src_repo)
         logger.info('Source Path: ' + self.src_path)
         logger.info('Recycle Repo: ' + self.recycle_repo)
+        logger.info('Search Type: ' + self.artifact_type)
         logger.info('Retention Period: ' + self.retention_period)
-        logger.info('Copy: ' + str(copy))
+        logger.info('Copy: ' + str(copy) + ' Delete: ' + str(delete))
         logger.info('Delete Artifacts Before/On: ' + str(datetime.date.today() - datetime.timedelta(int(self.retention_period[0:len(self.retention_period) - 1]))))
         logger.info("==============================================")
 
