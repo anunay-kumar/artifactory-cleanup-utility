@@ -27,12 +27,14 @@ import logging,os,datetime,yaml,json
 from artifactoryUtils import *
 from optparse import OptionParser
 
+util = cleanup.utils()
+
 # Set logger
 now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 log_file = os.getcwd() + '/cleanup_' + now + '.log'
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format='[%(asctime)s][%(name)s] %(levelname)s  %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S',
                     filename = log_file)
@@ -43,14 +45,14 @@ logger.addHandler(ch)
 
 
 def run(isDryRun):
-    util = cleanup.utils()
     logger.info("----Starting----")
 
-    with open(r'artifactory.yaml') as file:
+    with open(util.config_file, 'r') as file:
         artifactory = yaml.full_load(file)
         logger.debug('>> Parsing YAML file for cleanup paths:')
         logger.debug('Yaml: ' + json.dumps(artifactory))
         recycle_repo = artifactory['recycle']
+        util.skip_list = artifactory['skip_list']
         for repo in artifactory['repos']:
                 retention = artifactory['repos'][repo]['retention']
                 logger.debug('Repo: ' + repo)
@@ -61,18 +63,24 @@ def run(isDryRun):
     logger.info("------Done------")
     util.upload_logs(recycle_repo, 'runlogs', log_file)
 
+
 # Parse the input options
 parser = OptionParser(
-    usage="Usage: %prog [options] --dryrun or --production\n \
+    usage="Usage: %prog [options] --dryrun or --production or --config-file\n \
     --dryrun: Generate a log report of all the changes that will be done\n \
     --production: Run in production mode, cleanup all the files \n \
+    --config-file: Pass the the config file, default is artifactory.yaml \n \
     This script cleans up the artifactory repos and associated paths based on the artifactory.yaml file \n \
     found in the same directory as this script. It requires Python3.",
     version="%prog 1.0")
+
 parser.add_option("--dryrun", dest="dryrun", action="store_true", default=False, help="Dry run and verify the delete report")
 parser.add_option("--production", dest="production", action="store_true", default=False, help="Run in production mode, changes will be made")
+parser.add_option("--config-file", dest="config_file", default='artifactory.yaml', help="Pass the the config file, default is artifactory.yaml")
 
 (options, args) = parser.parse_args()
+
+util.config_file = os.path.abspath(options.config_file)
 
 if options.dryrun:
     logger.info('Running in ------DRY RUN MODE/NO CHANGES WILL BE MADE------')
