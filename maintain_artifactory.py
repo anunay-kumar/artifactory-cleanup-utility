@@ -78,6 +78,7 @@ def run(isDryRun):
         logger.debug('>> Parsing YAML file for cleanup paths:')
         logger.debug('Yaml: ' + json.dumps(artifactory))
         recycle_repo = artifactory['recycle']
+        util.art_host = artifactory['art_host']
         util.skip_list = artifactory['skip_list']
         for repo in artifactory['repos']:
                 retention = artifactory['repos'][repo]['retention']
