@@ -1,3 +1,4 @@
+#Set the artifactory host 
 art_host: http://art-host.com/artifactory
 
 # Recycle repo - deleted files will be moved here
