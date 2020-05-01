@@ -10,7 +10,7 @@ recycle: art-recycle-generic-local
 # You can delete files or folders in a given path as below
 # By default only folder are searched and cleaned
 #repos:
-#  hyc-pureapp-generic-local:
+#  ext-generic-local:
 #    paths:
 #      - builds/dev/hello-world/1.0.3.1|file [Path appended with |file will cleanup files in the path]
 #      - builds/dev/hello-world/1.0.3.1      [Path appended with nothing will cleanup folders in the path as default]
